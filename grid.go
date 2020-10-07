@@ -152,10 +152,10 @@ func (g *Grid) UpdateNeighbor(current, neighbor *Node) {
 
 func (g *Grid) Step() (complete bool) {
 	if g.current != nil {
-		g.closed[int(g.current.x)][int(g.current.y)] = g.current
 		if int(g.current.x) == g.dst_x && int(g.current.y) == g.dst_y {
 			return true
 		}
+		g.closed[int(g.current.x)][int(g.current.y)] = g.current
 	}
 
 	current := g.GetNextOpen()
