@@ -6,3 +6,5 @@ To run the program, run the following command.
 ```bash
 go run *.go
 ```
+
+![screenshot](img/screen.png)
