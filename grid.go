@@ -70,6 +70,19 @@ func NewGrid(width, height, src_x, src_y, dst_x, dst_y int) *Grid {
 	return g
 }
 
+func (g *Grid) Restart() {
+	for x := 0; x < g.width; x++ {
+		for y := 0; y < g.height; y++ {
+			g.grid[x][y].g = -1
+			g.grid[x][y].last = nil
+		}
+		g.opened[x] = make(map[int]*Node)
+		g.closed[x] = make(map[int]*Node)
+	}
+	g.current = nil
+	g.opened[g.src_x][g.src_y] = g.grid[g.src_x][g.src_y]
+}
+
 func (g *Grid) Draw(win *pixelgl.Window) {
 	g.batch.Clear()
 	for _, v := range g.closed {

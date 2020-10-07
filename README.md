@@ -8,3 +8,8 @@ go run *.go
 ```
 
 ![screenshot](img/screen.png)
+
+## Controls
+`r` - Restarts the search
+`Space` - Creates a new grid
+`Esc` - Exits the program
