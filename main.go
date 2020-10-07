@@ -8,9 +8,11 @@ import (
 	"time"
 )
 
-const winx, winy float64 = 400, 400
-const scale float64 = 5
-const frametime time.Duration = time.Second / 20
+const winx, winy float64 = 600, 600
+const scale float64 = 2
+
+//const frametime time.Duration = time.Second / 60
+const frametime time.Duration = 0
 
 func run() {
 	// Set up window

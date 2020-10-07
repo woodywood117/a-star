@@ -11,9 +11,9 @@ var pict *pixel.PictureData
 var red, green, blue, black *pixel.Sprite
 
 func init() {
-	pict = pixel.MakePictureData(pixel.R(0, 0, scale, scale * 4))
+	pict = pixel.MakePictureData(pixel.R(0, 0, scale, scale*4))
 	for i := 0; i < len(pict.Pix); i++ {
-		switch i / int(scale * scale) {
+		switch i / int(scale*scale) {
 		case 0:
 			pict.Pix[i] = colornames.Green
 		case 1:
@@ -25,28 +25,28 @@ func init() {
 		}
 	}
 	green = pixel.NewSprite(pict, pixel.R(0, 0, scale, scale))
-	blue = pixel.NewSprite(pict, pixel.R(0, scale, scale, scale * 2))
-	red = pixel.NewSprite(pict, pixel.R(0, scale * 2, scale, scale * 3))
-	black = pixel.NewSprite(pict, pixel.R(0, scale * 3, scale, scale * 4))
+	blue = pixel.NewSprite(pict, pixel.R(0, scale, scale, scale*2))
+	red = pixel.NewSprite(pict, pixel.R(0, scale*2, scale, scale*3))
+	black = pixel.NewSprite(pict, pixel.R(0, scale*3, scale, scale*4))
 }
 
 type Grid struct {
 	width, height, src_x, src_y, dst_x, dst_y int
-	opened, closed map[int]map[int]*Node
-	current *Node
-	grid [][]*Node
-	batch *pixel.Batch
+	opened, closed                            map[int]map[int]*Node
+	current                                   *Node
+	grid                                      [][]*Node
+	batch                                     *pixel.Batch
 }
 
 func NewGrid(width, height, src_x, src_y, dst_x, dst_y int) *Grid {
 	g := &Grid{
-		width: width,
+		width:  width,
 		height: height,
-		src_x: src_x,
-		src_y: src_y,
-		dst_x: dst_x,
-		dst_y: dst_y,
-		batch: pixel.NewBatch(&pixel.TrianglesData{}, pict),
+		src_x:  src_x,
+		src_y:  src_y,
+		dst_x:  dst_x,
+		dst_y:  dst_y,
+		batch:  pixel.NewBatch(&pixel.TrianglesData{}, pict),
 		opened: make(map[int]map[int]*Node),
 		closed: make(map[int]map[int]*Node),
 	}
@@ -56,7 +56,7 @@ func NewGrid(width, height, src_x, src_y, dst_x, dst_y int) *Grid {
 		for y := 0; y < height; y++ {
 			chance := rand.Float64()
 			traversable := false
-			if chance > 0.2 || (x == src_x && y == src_y) || (x == dst_x && y == dst_y) {
+			if chance > 0.4 || (x == src_x && y == src_y) || (x == dst_x && y == dst_y) {
 				traversable = true
 			}
 			g.grid[x][y] = NewNode(float64(x), float64(y), traversable)
@@ -129,7 +129,7 @@ func (g *Grid) UpdateNeighbor(current, neighbor *Node) {
 		return
 	}
 
-	if neighbor.g > current.g + current.dist(neighbor.x, neighbor.y) || neighbor.g == -1 {
+	if neighbor.g > current.g+current.dist(neighbor.x, neighbor.y) || neighbor.g == -1 {
 		neighbor.g = current.g + current.dist(neighbor.x, neighbor.y)
 		neighbor.last = current
 	}
@@ -157,7 +157,7 @@ func (g *Grid) Step() (complete bool) {
 			g.UpdateNeighbor(g.current, left)
 		}
 	}
-	if int(g.current.x) < g.width - 1 {
+	if int(g.current.x) < g.width-1 {
 		right := g.grid[int(g.current.x)+1][int(g.current.y)]
 		if right.traversable {
 			g.UpdateNeighbor(g.current, right)
@@ -169,7 +169,7 @@ func (g *Grid) Step() (complete bool) {
 			g.UpdateNeighbor(g.current, down)
 		}
 	}
-	if int(g.current.y) < g.height - 1 {
+	if int(g.current.y) < g.height-1 {
 		up := g.grid[int(g.current.x)][int(g.current.y)+1]
 		if up.traversable {
 			g.UpdateNeighbor(g.current, up)
@@ -181,19 +181,19 @@ func (g *Grid) Step() (complete bool) {
 			g.UpdateNeighbor(g.current, left_down)
 		}
 	}
-	if g.current.x > 0 && int(g.current.y) < g.height - 1 {
+	if g.current.x > 0 && int(g.current.y) < g.height-1 {
 		left_up := g.grid[int(g.current.x)-1][int(g.current.y)+1]
 		if left_up.traversable {
 			g.UpdateNeighbor(g.current, left_up)
 		}
 	}
-	if int(g.current.x) < g.width - 1 && g.current.y > 0 {
+	if int(g.current.x) < g.width-1 && g.current.y > 0 {
 		left_down := g.grid[int(g.current.x)+1][int(g.current.y)-1]
 		if left_down.traversable {
 			g.UpdateNeighbor(g.current, left_down)
 		}
 	}
-	if int(g.current.x) < g.width - 1 && int(g.current.y) < g.height - 1 {
+	if int(g.current.x) < g.width-1 && int(g.current.y) < g.height-1 {
 		left_up := g.grid[int(g.current.x)+1][int(g.current.y)+1]
 		if left_up.traversable {
 			g.UpdateNeighbor(g.current, left_up)
