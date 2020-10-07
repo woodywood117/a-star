@@ -37,8 +37,8 @@ func run() {
 
 		win.Clear(colornames.White)
 		complete := grid.Step()
+		grid.Draw(win)
 		if complete {
-			grid.Draw(win)
 			//fmt.Println("Done!")
 			//return
 		}
