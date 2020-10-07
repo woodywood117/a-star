@@ -56,7 +56,7 @@ func NewGrid(width, height, src_x, src_y, dst_x, dst_y int) *Grid {
 		for y := 0; y < height; y++ {
 			chance := rand.Float64()
 			traversable := false
-			if chance > 0.4 || (x == src_x && y == src_y) || (x == dst_x && y == dst_y) {
+			if chance > 0.2 || (x == src_x && y == src_y) || (x == dst_x && y == dst_y) {
 				traversable = true
 			}
 			g.grid[x][y] = NewNode(float64(x), float64(y), traversable)
@@ -164,52 +164,87 @@ func (g *Grid) Step() (complete bool) {
 	}
 	g.current = current
 
+	// Left neighbor
 	if g.current.x > 0 {
 		left := g.grid[int(g.current.x)-1][int(g.current.y)]
 		if left.traversable {
 			g.UpdateNeighbor(g.current, left)
 		}
 	}
+
+	// Right neighbor
 	if int(g.current.x) < g.width-1 {
 		right := g.grid[int(g.current.x)+1][int(g.current.y)]
 		if right.traversable {
 			g.UpdateNeighbor(g.current, right)
 		}
 	}
+
+	// Bottom neighbor
 	if g.current.y > 0 {
 		down := g.grid[int(g.current.x)][int(g.current.y)-1]
 		if down.traversable {
 			g.UpdateNeighbor(g.current, down)
 		}
 	}
+
+	// Top neighbor
 	if int(g.current.y) < g.height-1 {
 		up := g.grid[int(g.current.x)][int(g.current.y)+1]
 		if up.traversable {
 			g.UpdateNeighbor(g.current, up)
 		}
 	}
+
+	// Bottom-left neighbor
 	if g.current.x > 0 && g.current.y > 0 {
-		left_down := g.grid[int(g.current.x)-1][int(g.current.y)-1]
-		if left_down.traversable {
-			g.UpdateNeighbor(g.current, left_down)
+		left := g.grid[int(g.current.x)-1][int(g.current.y)]
+		down := g.grid[int(g.current.x)][int(g.current.y)-1]
+
+		if left.traversable || down.traversable {
+			left_down := g.grid[int(g.current.x)-1][int(g.current.y)-1]
+			if left_down.traversable {
+				g.UpdateNeighbor(g.current, left_down)
+			}
 		}
 	}
+
+	// Top-left neighbor
 	if g.current.x > 0 && int(g.current.y) < g.height-1 {
-		left_up := g.grid[int(g.current.x)-1][int(g.current.y)+1]
-		if left_up.traversable {
-			g.UpdateNeighbor(g.current, left_up)
+		left := g.grid[int(g.current.x)-1][int(g.current.y)]
+		up := g.grid[int(g.current.x)][int(g.current.y)+1]
+
+		if left.traversable || up.traversable {
+			left_up := g.grid[int(g.current.x)-1][int(g.current.y)+1]
+			if left_up.traversable {
+				g.UpdateNeighbor(g.current, left_up)
+			}
 		}
 	}
+
+	// Bottom-right neighbor
 	if int(g.current.x) < g.width-1 && g.current.y > 0 {
-		left_down := g.grid[int(g.current.x)+1][int(g.current.y)-1]
-		if left_down.traversable {
-			g.UpdateNeighbor(g.current, left_down)
+		right := g.grid[int(g.current.x)+1][int(g.current.y)]
+		down := g.grid[int(g.current.x)][int(g.current.y)-1]
+
+		if right.traversable || down.traversable {
+			right_down := g.grid[int(g.current.x)+1][int(g.current.y)-1]
+			if right_down.traversable {
+				g.UpdateNeighbor(g.current, right_down)
+			}
 		}
 	}
+
+	// Top-right neighbor
 	if int(g.current.x) < g.width-1 && int(g.current.y) < g.height-1 {
-		left_up := g.grid[int(g.current.x)+1][int(g.current.y)+1]
-		if left_up.traversable {
-			g.UpdateNeighbor(g.current, left_up)
+		right := g.grid[int(g.current.x)+1][int(g.current.y)]
+		up := g.grid[int(g.current.x)][int(g.current.y)+1]
+
+		if right.traversable || up.traversable {
+			right_up := g.grid[int(g.current.x)+1][int(g.current.y)+1]
+			if right_up.traversable {
+				g.UpdateNeighbor(g.current, right_up)
+			}
 		}
 	}
 
