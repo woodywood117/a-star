@@ -2,23 +2,28 @@ package main
 
 import (
 	"github.com/faiface/pixel"
+	"github.com/faiface/pixel/imdraw"
+	"golang.org/x/image/colornames"
 	"math"
 )
 
 type Node struct {
-	x, y, g, h float64
-	last *Node
-	traversable bool
+	x, y, g, h            float64
+	last                  *Node
+	left, right, down, up bool
 }
 
-func NewNode(x, y float64, traversable bool) *Node {
+func NewNode(x, y float64) *Node {
 	n := &Node{
-		x: x,
-		y: y,
-		g: -1,
-		h: 0,
-		last: nil,
-		traversable: traversable,
+		x:     x,
+		y:     y,
+		g:     -1,
+		h:     0,
+		last:  nil,
+		left:  true,
+		right: true,
+		down:  true,
+		up:    true,
 	}
 	return n
 }
@@ -40,6 +45,38 @@ func (n *Node) dist(x, y float64) float64 {
 	return math.Sqrt(first + second)
 }
 
-func (n *Node) Draw (win pixel.Target, tile *pixel.Sprite) {
-	tile.Draw(win, pixel.IM.Moved(pixel.V(n.x * scale + scale/2, n.y * scale + scale/2)))
+func (n *Node) Draw(win pixel.Target, tile *pixel.Sprite) {
+	tile.Draw(win, pixel.IM.Moved(pixel.V(n.x*scale+scale/2, n.y*scale+scale/2)))
+
+	imd := imdraw.New(nil)
+	thickness := scale / 10
+
+	if n.left {
+		imd.Color = colornames.Black
+		imd.Push(pixel.V(n.x*scale, n.y*scale+scale), pixel.V(n.x*scale, n.y*scale))
+		imd.Line(thickness)
+		imd.Draw(win)
+		imd.Reset()
+	}
+	if n.right {
+		imd.Color = colornames.Black
+		imd.Push(pixel.V(n.x*scale+scale, n.y*scale+scale), pixel.V(n.x*scale+scale, n.y*scale))
+		imd.Line(thickness)
+		imd.Draw(win)
+		imd.Reset()
+	}
+	if n.down {
+		imd.Color = colornames.Black
+		imd.Push(pixel.V(n.x*scale, n.y*scale), pixel.V(n.x*scale+scale, n.y*scale))
+		imd.Line(thickness)
+		imd.Draw(win)
+		imd.Reset()
+	}
+	if n.up {
+		imd.Color = colornames.Black
+		imd.Push(pixel.V(n.x*scale, n.y*scale+scale), pixel.V(n.x*scale+scale, n.y*scale+scale))
+		imd.Line(thickness)
+		imd.Draw(win)
+		imd.Reset()
+	}
 }

@@ -10,9 +10,8 @@ import (
 
 // Global constants (window height/width, node size, and framerate limit)
 const winx, winy float64 = 600, 600
-const scale float64 = 3
+const scale float64 = 10
 
-//const frametime time.Duration = time.Second / 60
 const frametime time.Duration = 0
 
 func run() {
