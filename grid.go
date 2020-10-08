@@ -3,32 +3,8 @@ package main
 import (
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
-	"golang.org/x/image/colornames"
 	"math/rand"
 )
-
-var pict *pixel.PictureData
-var red, green, blue, black *pixel.Sprite
-
-func init() {
-	pict = pixel.MakePictureData(pixel.R(0, 0, scale, scale*4))
-	for i := 0; i < len(pict.Pix); i++ {
-		switch i / int(scale*scale) {
-		case 0:
-			pict.Pix[i] = colornames.Green
-		case 1:
-			pict.Pix[i] = colornames.Blue
-		case 2:
-			pict.Pix[i] = colornames.Red
-		case 3:
-			pict.Pix[i] = colornames.Black
-		}
-	}
-	green = pixel.NewSprite(pict, pixel.R(0, 0, scale, scale))
-	blue = pixel.NewSprite(pict, pixel.R(0, scale, scale, scale*2))
-	red = pixel.NewSprite(pict, pixel.R(0, scale*2, scale, scale*3))
-	black = pixel.NewSprite(pict, pixel.R(0, scale*3, scale, scale*4))
-}
 
 type Grid struct {
 	width, height, src_x, src_y, dst_x, dst_y int
@@ -54,20 +30,89 @@ func NewGrid(width, height, src_x, src_y, dst_x, dst_y int) *Grid {
 	for x := 0; x < width; x++ {
 		g.grid = append(g.grid, make([]*Node, height))
 		for y := 0; y < height; y++ {
-			chance := rand.Float64()
-			traversable := false
-			if chance > 0.2 || (x == src_x && y == src_y) || (x == dst_x && y == dst_y) {
-				traversable = true
-			}
-			g.grid[x][y] = NewNode(float64(x), float64(y), traversable)
+			g.grid[x][y] = NewNode(float64(x), float64(y))
 			g.grid[x][y].Hscore(float64(dst_x), float64(dst_y))
 		}
 		g.opened[x] = make(map[int]*Node)
 		g.closed[x] = make(map[int]*Node)
 	}
 
+	g.InitMaze()
+	g.Restart()
+
 	g.opened[src_x][src_y] = g.grid[src_x][src_y]
 	return g
+}
+
+func (g *Grid) InitMaze() {
+	stack := []*Node{}
+
+	current := g.grid[g.src_x][g.src_y]
+	current.last = current
+	stack = append(stack, current)
+
+	for {
+		if len(stack) == 0 {
+			break
+		}
+
+		// Pop from stack
+		current = stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
+		// Select random unvisited neighbor
+		unvisited := []*Node{}
+		if current.x > 0 {
+			left := g.grid[int(current.x)-1][int(current.y)]
+			if left.last == nil {
+				unvisited = append(unvisited, left)
+			}
+		}
+		if int(current.x) < g.width-1 {
+			right := g.grid[int(current.x)+1][int(current.y)]
+			if right.last == nil {
+				unvisited = append(unvisited, right)
+			}
+		}
+		if current.y > 0 {
+			down := g.grid[int(current.x)][int(current.y)-1]
+			if down.last == nil {
+				unvisited = append(unvisited, down)
+			}
+		}
+		if int(current.y) < g.height-1 {
+			up := g.grid[int(current.x)][int(current.y)+1]
+			if up.last == nil {
+				unvisited = append(unvisited, up)
+			}
+		}
+		if len(unvisited) == 0 {
+			continue
+		}
+		stack = append(stack, current)
+		next := unvisited[rand.Intn(len(unvisited))]
+
+		// Remove wall between cells
+		if current.x > next.x {
+			current.left = false
+			next.right = false
+		}
+		if current.x < next.x {
+			current.right = false
+			next.left = false
+		}
+		if current.y > next.y {
+			current.down = false
+			next.up = false
+		}
+		if current.y < next.y {
+			current.up = false
+			next.down = false
+		}
+
+		next.last = next
+		stack = append(stack, next)
+	}
 }
 
 func (g *Grid) Restart() {
@@ -85,6 +130,12 @@ func (g *Grid) Restart() {
 
 func (g *Grid) Draw(win *pixelgl.Window) {
 	g.batch.Clear()
+	for x := range g.grid {
+		for y := range g.grid[x] {
+			g.grid[x][y].Draw(g.batch, white)
+		}
+	}
+
 	for _, v := range g.closed {
 		for _, iv := range v {
 			iv.Draw(g.batch, red)
@@ -100,14 +151,6 @@ func (g *Grid) Draw(win *pixelgl.Window) {
 	for current != nil {
 		current.Draw(g.batch, blue)
 		current = current.last
-	}
-
-	for x := range g.grid {
-		for y := range g.grid[x] {
-			if !g.grid[x][y].traversable {
-				g.grid[x][y].Draw(g.batch, black)
-			}
-		}
 	}
 
 	g.batch.Draw(win)
@@ -165,87 +208,27 @@ func (g *Grid) Step() (complete bool) {
 	g.current = current
 
 	// Left neighbor
-	if g.current.x > 0 {
+	if !g.current.left {
 		left := g.grid[int(g.current.x)-1][int(g.current.y)]
-		if left.traversable {
-			g.UpdateNeighbor(g.current, left)
-		}
+		g.UpdateNeighbor(g.current, left)
 	}
 
 	// Right neighbor
-	if int(g.current.x) < g.width-1 {
+	if !g.current.right {
 		right := g.grid[int(g.current.x)+1][int(g.current.y)]
-		if right.traversable {
-			g.UpdateNeighbor(g.current, right)
-		}
+		g.UpdateNeighbor(g.current, right)
 	}
 
 	// Bottom neighbor
-	if g.current.y > 0 {
+	if !g.current.down {
 		down := g.grid[int(g.current.x)][int(g.current.y)-1]
-		if down.traversable {
-			g.UpdateNeighbor(g.current, down)
-		}
+		g.UpdateNeighbor(g.current, down)
 	}
 
 	// Top neighbor
-	if int(g.current.y) < g.height-1 {
+	if !g.current.up {
 		up := g.grid[int(g.current.x)][int(g.current.y)+1]
-		if up.traversable {
-			g.UpdateNeighbor(g.current, up)
-		}
-	}
-
-	// Bottom-left neighbor
-	if g.current.x > 0 && g.current.y > 0 {
-		left := g.grid[int(g.current.x)-1][int(g.current.y)]
-		down := g.grid[int(g.current.x)][int(g.current.y)-1]
-
-		if left.traversable || down.traversable {
-			left_down := g.grid[int(g.current.x)-1][int(g.current.y)-1]
-			if left_down.traversable {
-				g.UpdateNeighbor(g.current, left_down)
-			}
-		}
-	}
-
-	// Top-left neighbor
-	if g.current.x > 0 && int(g.current.y) < g.height-1 {
-		left := g.grid[int(g.current.x)-1][int(g.current.y)]
-		up := g.grid[int(g.current.x)][int(g.current.y)+1]
-
-		if left.traversable || up.traversable {
-			left_up := g.grid[int(g.current.x)-1][int(g.current.y)+1]
-			if left_up.traversable {
-				g.UpdateNeighbor(g.current, left_up)
-			}
-		}
-	}
-
-	// Bottom-right neighbor
-	if int(g.current.x) < g.width-1 && g.current.y > 0 {
-		right := g.grid[int(g.current.x)+1][int(g.current.y)]
-		down := g.grid[int(g.current.x)][int(g.current.y)-1]
-
-		if right.traversable || down.traversable {
-			right_down := g.grid[int(g.current.x)+1][int(g.current.y)-1]
-			if right_down.traversable {
-				g.UpdateNeighbor(g.current, right_down)
-			}
-		}
-	}
-
-	// Top-right neighbor
-	if int(g.current.x) < g.width-1 && int(g.current.y) < g.height-1 {
-		right := g.grid[int(g.current.x)+1][int(g.current.y)]
-		up := g.grid[int(g.current.x)][int(g.current.y)+1]
-
-		if right.traversable || up.traversable {
-			right_up := g.grid[int(g.current.x)+1][int(g.current.y)+1]
-			if right_up.traversable {
-				g.UpdateNeighbor(g.current, right_up)
-			}
-		}
+		g.UpdateNeighbor(g.current, up)
 	}
 
 	return false
